@@ -229,7 +229,7 @@ _gomock_prog_exec = go_rule(
 
 def _go_tool_run_shell_stdout(ctx, cmd, args, extra_inputs, out):
     go_ctx = go_context(ctx)
-    gopath = "$(pwd)/" + ctx.var["BINDIR"] + "/" + ctx.attr.gopath_dep[GoPath].gopath
+    # gopath = "$(pwd)/" + ctx.var["BINDIR"] + "/" + ctx.attr.gopath_dep[GoPath].gopath
 
     inputs = (
         ctx.attr.gopath_dep.files.to_list() +
@@ -245,14 +245,15 @@ def _go_tool_run_shell_stdout(ctx, cmd, args, extra_inputs, out):
             cmd,
             go_ctx.go,
         ],
+# FIXME           export GOPATH={gopath} &&
+
         command = """
            source <($PWD/{godir}/go env) &&
            export PATH=$GOROOT/bin:$PWD/{godir}:$PATH &&
-           export GOPATH={gopath} &&
            {cmd} {args} > {out}
         """.format(
             godir = go_ctx.go.path[:-1 - len(go_ctx.go.basename)],
-            gopath = gopath,
+       #     gopath = gopath, FIXME
             cmd = "$(pwd)/" + cmd.path,
             args = " ".join(args),
             out = out.path,
