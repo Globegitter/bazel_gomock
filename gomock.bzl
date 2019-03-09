@@ -1,4 +1,4 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_context", "go_path", "go_rule")
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_context", "go_rule")
 load("@io_bazel_rules_go//go/private:providers.bzl", "GoLibrary", "GoPath")
 
 _MOCKGEN_TOOL = "@com_github_golang_mock//mockgen"
@@ -43,11 +43,6 @@ _gomock_source = go_rule(
         "package": attr.string(
             doc = "The name of the package the generated mocks should be in. If not specified, uses mockgen's default.",
         ),
-        "gopath_dep": attr.label(
-            doc = "The go_path label to use to create the GOPATH for the given library. Will be set correctly by the gomock macro, so you don't need to set it.",
-            providers = [GoPath],
-            mandatory = False,
-        ),
         "mockgen_tool": attr.label(
             doc = "The mockgen tool to run",
             default = Label(_MOCKGEN_TOOL),
@@ -65,15 +60,9 @@ def gomock(name, library, out, **kwargs):
         mockgen_tool = kwargs["mockgen_tool"]
 
     if kwargs.get("source", None):
-        gopath_name = name + "_gomock_gopath"
-        go_path(
-            name = gopath_name,
-            deps = [library, mockgen_tool],
-        )
         _gomock_source(
             name = name,
             library = library,
-            gopath_dep = gopath_name,
             out = out,
             **kwargs
         )
@@ -229,10 +218,7 @@ _gomock_prog_exec = go_rule(
 
 def _go_tool_run_shell_stdout(ctx, cmd, args, extra_inputs, out):
     go_ctx = go_context(ctx)
-    # gopath = "$(pwd)/" + ctx.var["BINDIR"] + "/" + ctx.attr.gopath_dep[GoPath].gopath
-
-    inputs = (
-        ctx.attr.gopath_dep.files.to_list() +
+n    inputs = (
         go_ctx.sdk.headers + go_ctx.sdk.srcs + go_ctx.sdk.tools
     ) + extra_inputs
 
@@ -245,15 +231,12 @@ def _go_tool_run_shell_stdout(ctx, cmd, args, extra_inputs, out):
             cmd,
             go_ctx.go,
         ],
-# FIXME           export GOPATH={gopath} &&
-
         command = """
            source <($PWD/{godir}/go env) &&
            export PATH=$GOROOT/bin:$PWD/{godir}:$PATH &&
            {cmd} {args} > {out}
         """.format(
             godir = go_ctx.go.path[:-1 - len(go_ctx.go.basename)],
-       #     gopath = gopath, FIXME
             cmd = "$(pwd)/" + cmd.path,
             args = " ".join(args),
             out = out.path,
