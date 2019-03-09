@@ -218,7 +218,7 @@ _gomock_prog_exec = go_rule(
 
 def _go_tool_run_shell_stdout(ctx, cmd, args, extra_inputs, out):
     go_ctx = go_context(ctx)
-    inputs = go_ctx.sdk.headers.to_list() + go_ctx.sdk.srcs + go_ctx.sdk.tools + extra_inputs
+    inputs = go_ctx.sdk.headers + go_ctx.sdk.srcs + go_ctx.sdk.tools + extra_inputs
 
     # We can use the go binary from the stdlib for most of the environment
     # variables, but our GOPATH is specific to the library target we were given.
